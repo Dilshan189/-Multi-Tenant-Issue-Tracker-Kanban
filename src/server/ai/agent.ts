@@ -133,7 +133,7 @@ export async function runGeminiAgentAction(
             activityLogs: {
               create: {
                 action: "AI_AGENT_ACTION",
-                details: { agent: "Gemini 1.5/2.5", prompt },
+                details: JSON.stringify({ agent: "Gemini 1.5/2.5", prompt }),
                 workspaceId,
               },
             },
@@ -250,7 +250,7 @@ Be concise, professional, and explain what tool was called and the outcome.
                 activityLogs: {
                   create: {
                     action: "AI_AGENT_ACTION",
-                    details: { agent: "Gemini 2.5 Flash", args: callArgs },
+                    details: JSON.stringify({ agent: "Gemini 2.5 Flash", args: callArgs }),
                     workspaceId,
                   },
                 },

@@ -69,7 +69,7 @@ export async function createTaskAction(data: CreateTaskInput) {
         activityLogs: {
           create: {
             action: "TASK_CREATED",
-            details: { title: data.title, status: targetStatus },
+            details: JSON.stringify({ title: data.title, status: targetStatus }),
             workspaceId: data.workspaceId,
             userId: creatorId,
           },
@@ -114,7 +114,7 @@ export async function updateTaskStatusAndOrderAction(
         activityLogs: {
           create: {
             action: "STATUS_CHANGED",
-            details: { from: existing.status, to: newStatus },
+            details: JSON.stringify({ from: existing.status, to: newStatus }),
             workspaceId: existing.workspaceId,
           },
         },

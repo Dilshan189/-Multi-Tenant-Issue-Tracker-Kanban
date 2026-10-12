@@ -121,6 +121,8 @@ const FALLBACK_TASKS: TaskItem[] = [
   },
 ];
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   let workspace: WorkspaceSummary = FALLBACK_WORKSPACE;
   let tasks: TaskItem[] = FALLBACK_TASKS;
