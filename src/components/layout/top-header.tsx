@@ -13,6 +13,7 @@ import {
   Sparkles,
   Plus,
   X,
+  History,
 } from "lucide-react";
 
 interface TopHeaderProps {
@@ -126,6 +127,17 @@ export function TopHeader({ projects, workspaceName }: TopHeaderProps) {
             title="List View"
           >
             <ListTodo className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setViewMode("activity")}
+            className={`p-1 rounded-md text-xs transition-colors ${
+              viewMode === "activity"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="Activity Audit Trail"
+          >
+            <History className="w-3.5 h-3.5" />
           </button>
         </div>
 

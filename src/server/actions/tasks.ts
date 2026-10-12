@@ -140,7 +140,7 @@ export async function updateTaskDetailsAction(
   taskId: string,
   updates: {
     title?: string;
-    description?: string;
+    description?: string | null;
     status?: TaskStatus;
     priority?: TaskPriority;
     assigneeId?: string | null;
