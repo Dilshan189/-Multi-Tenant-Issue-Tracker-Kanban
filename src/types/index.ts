@@ -58,9 +58,35 @@ export interface WorkspaceSummary {
   projects: ProjectSummary[];
 }
 
-export interface FilterState {
-  searchQuery: string;
-  projectId: string | null;
-  priority: TaskPriority | null;
-  assigneeId: string | null;
+export interface WorkspaceMemberItem {
+  id: string;
+  role: MemberRole;
+  workspaceId: string;
+  userId: string;
+  user: UserSummary;
+}
+
+export interface ActivityLogItem {
+  id: string;
+  action: string;
+  details: string | null;
+  createdAt: Date | string;
+  taskId: string | null;
+  userId: string | null;
+  user: UserSummary | null;
+  task?: {
+    id: string;
+    title: string;
+    taskNumber?: number;
+    project?: { key: string };
+  } | null;
+}
+
+export interface WorkspaceListItem {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  projectsCount?: number;
+  tasksCount?: number;
 }
