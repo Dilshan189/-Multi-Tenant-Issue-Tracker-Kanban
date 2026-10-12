@@ -21,14 +21,15 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 ];
 
 export function KanbanBoard({ initialTasks, workspaceSlug }: KanbanBoardProps) {
-  const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
+  const { tasks, setTasks, filters } = useUIStore();
   const [, startTransition] = useTransition();
-  const { filters } = useUIStore();
 
   // Sync state whenever initialTasks from server updates
   useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
+    if (initialTasks && initialTasks.length > 0) {
+      setTasks(initialTasks);
+    }
+  }, [initialTasks, setTasks]);
 
   // Apply Client-side Filters
   const filteredTasks = tasks.filter((task) => {

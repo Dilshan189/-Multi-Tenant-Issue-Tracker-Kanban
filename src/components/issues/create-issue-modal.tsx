@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUIStore } from "@/stores/use-ui-store";
 import { createTaskAction } from "@/server/actions/tasks";
-import { ProjectSummary, TaskPriority, TaskStatus, UserSummary } from "@/types";
+import { ProjectSummary, TaskItem, TaskPriority, TaskStatus, UserSummary } from "@/types";
 import { Sparkles, Loader2 } from "lucide-react";
 
 interface CreateIssueModalProps {
@@ -27,11 +28,13 @@ export function CreateIssueModal({
   members,
   workspaceId,
 }: CreateIssueModalProps) {
+  const router = useRouter();
   const {
     isCreateTaskOpen,
     closeCreateTask,
     createTaskDefaultStatus,
     createTaskDefaultProjectId,
+    addTask,
   } = useUIStore();
 
   const [title, setTitle] = useState("");
@@ -71,10 +74,12 @@ export function CreateIssueModal({
         assigneeId: assigneeId || null,
       });
 
-      if (res.success) {
+      if (res.success && res.data) {
+        addTask(res.data as unknown as TaskItem);
         setTitle("");
         setDescription("");
         closeCreateTask();
+        router.refresh();
       } else {
         alert("Failed to create task: " + res.error);
       }

@@ -21,8 +21,9 @@ interface TaskListViewProps {
   tasks: TaskItem[];
 }
 
-export function TaskListView({ tasks }: TaskListViewProps) {
-  const { openTaskDetails, filters } = useUIStore();
+export function TaskListView({ tasks: propTasks }: TaskListViewProps) {
+  const { openTaskDetails, filters, tasks: storeTasks } = useUIStore();
+  const tasks = storeTasks.length > 0 ? storeTasks : propTasks;
 
   const getPriorityIcon = (priority: TaskPriority) => {
     switch (priority) {

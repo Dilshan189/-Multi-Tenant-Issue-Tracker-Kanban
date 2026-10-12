@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,8 @@ interface GeminiAssistantDialogProps {
 }
 
 export function GeminiAssistantDialog({ workspaceId }: GeminiAssistantDialogProps) {
-  const { isAIAssistantOpen, setAIAssistantOpen } = useUIStore();
+  const { isAIAssistantOpen, setAIAssistantOpen, addTask, updateTaskInStore, removeTaskFromStore, tasks } = useUIStore();
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [isPending, startTransition] = useTransition();
   const [history, setHistory] = useState<
@@ -33,7 +35,7 @@ export function GeminiAssistantDialog({ workspaceId }: GeminiAssistantDialogProp
   >([
     {
       role: "assistant",
-      text: "Hello! I am your autonomous Gemini Project Manager. You can tell me to create tasks, update statuses, or assign issues using natural language.",
+      text: "Hello! I am your autonomous Gemini Project Manager. You can instruct me in natural language to create issues, reassign team members, update statuses, or optimize sprint workflows.",
     },
   ]);
 
@@ -67,6 +69,22 @@ export function GeminiAssistantDialog({ workspaceId }: GeminiAssistantDialogProp
           tools: result.toolCallsExecuted,
         },
       ]);
+
+      // Optimistic Reactive Board Update
+      if (result.affectedTask) {
+        const exists = tasks.some((t) => t.id === result.affectedTask!.id);
+        if (exists) {
+          updateTaskInStore(result.affectedTask.id, result.affectedTask);
+        } else {
+          addTask(result.affectedTask);
+        }
+      }
+
+      if (result.deletedTaskId) {
+        removeTaskFromStore(result.deletedTaskId);
+      }
+
+      router.refresh();
     });
   };
 
@@ -154,22 +172,38 @@ export function GeminiAssistantDialog({ workspaceId }: GeminiAssistantDialogProp
         </div>
 
         {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 border-t border-border/30 bg-muted/10 flex items-center gap-1.5 overflow-x-auto text-[11px] text-muted-foreground">
-          <HelpCircle className="w-3 h-3 shrink-0" />
-          <span className="shrink-0 font-medium">Try:</span>
+        <div className="px-4 py-2 border-t border-border/30 bg-muted/10 flex items-center gap-1.5 overflow-x-auto text-[11px] text-muted-foreground scrollbar-none">
+          <HelpCircle className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+          <span className="shrink-0 font-medium">Quick commands:</span>
           <button
+            type="button"
             onClick={() =>
-              handleQuickPrompt("Create urgent task in FE project: Fix mobile responsive drawer")
+              handleQuickPrompt("Create urgent task in FE project: Optimize bundle split & hydration")
             }
-            className="px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted border border-border/40 hover:text-foreground shrink-0 transition-colors"
+            className="px-2.5 py-1 rounded-full bg-muted/60 hover:bg-muted border border-border/40 hover:text-foreground shrink-0 transition-colors text-[11px]"
           >
-            Create urgent FE task
+            + Create urgent FE issue
           </button>
           <button
-            onClick={() => handleQuickPrompt("Create task in AI project: Implement memory caching")}
-            className="px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted border border-border/40 hover:text-foreground shrink-0 transition-colors"
+            type="button"
+            onClick={() => handleQuickPrompt("Assign FE-1 to Sarah Chen")}
+            className="px-2.5 py-1 rounded-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0 transition-colors text-[11px]"
           >
-            Create AI task
+            ⚡ Assign FE-1 to Sarah
+          </button>
+          <button
+            type="button"
+            onClick={() => handleQuickPrompt("Move FE-2 status to DONE")}
+            className="px-2.5 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0 transition-colors text-[11px]"
+          >
+            ✓ Move FE-2 to DONE
+          </button>
+          <button
+            type="button"
+            onClick={() => handleQuickPrompt("Create task in AI project: Implement memory caching")}
+            className="px-2.5 py-1 rounded-full bg-muted/60 hover:bg-muted border border-border/40 hover:text-foreground shrink-0 transition-colors text-[11px]"
+          >
+            + Create AI task
           </button>
         </div>
 
