@@ -38,3 +38,37 @@ export async function getAllWorkspaces() {
     return [];
   }
 }
+
+export async function getWorkspaceMembers(workspaceId: string) {
+  try {
+    const members = await prisma.workspaceMember.findMany({
+      where: { workspaceId },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return members;
+  } catch (error) {
+    console.error("Error fetching workspace members:", error);
+    return [];
+  }
+}
+
+export async function getActivityLogs(workspaceId: string, limit = 20) {
+  try {
+    const logs = await prisma.activityLog.findMany({
+      where: { workspaceId },
+      include: {
+        user: true,
+        task: {
+          include: { project: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+    return logs;
+  } catch (error) {
+    console.error("Error fetching activity logs:", error);
+    return [];
+  }
+}

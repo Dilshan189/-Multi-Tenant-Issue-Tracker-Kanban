@@ -58,6 +58,13 @@ export interface WorkspaceSummary {
   projects: ProjectSummary[];
 }
 
+export interface FilterState {
+  searchQuery: string;
+  projectId: string | null;
+  priority: TaskPriority | null;
+  assigneeId: string | null;
+}
+
 export interface WorkspaceMemberItem {
   id: string;
   role: MemberRole;

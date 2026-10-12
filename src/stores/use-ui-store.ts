@@ -1,7 +1,14 @@
 import { create } from "zustand";
-import { FilterState, TaskPriority, TaskStatus } from "@/types";
+import { FilterState, TaskItem, TaskPriority, TaskStatus } from "@/types";
 
 interface UIState {
+  // Global Reactive Tasks Store (for instant optimistic synchronization)
+  tasks: TaskItem[];
+  setTasks: (tasks: TaskItem[]) => void;
+  addTask: (task: TaskItem) => void;
+  updateTaskInStore: (taskId: string, updates: Partial<TaskItem>) => void;
+  removeTaskFromStore: (taskId: string) => void;
+
   // Create Task Modal
   isCreateTaskOpen: boolean;
   createTaskDefaultStatus: TaskStatus;
@@ -19,9 +26,21 @@ interface UIState {
   toggleAIAssistant: () => void;
   setAIAssistantOpen: (open: boolean) => void;
 
+  // Team Members & Role Isolation (RBAC) Modal
+  isMembersModalOpen: boolean;
+  setMembersModalOpen: (open: boolean) => void;
+
+  // Create Project Modal
+  isCreateProjectOpen: boolean;
+  setCreateProjectOpen: (open: boolean) => void;
+
+  // Activity Audit Log Panel
+  isActivityLogsOpen: boolean;
+  setActivityLogsOpen: (open: boolean) => void;
+
   // View Mode
-  viewMode: "kanban" | "list";
-  setViewMode: (mode: "kanban" | "list") => void;
+  viewMode: "kanban" | "list" | "activity";
+  setViewMode: (mode: "kanban" | "list" | "activity") => void;
 
   // Filters
   filters: FilterState;
@@ -40,6 +59,22 @@ const initialFilters: FilterState = {
 };
 
 export const useUIStore = create<UIState>((set) => ({
+  // Tasks State
+  tasks: [],
+  setTasks: (tasks) => set({ tasks }),
+  addTask: (task) =>
+    set((state) => ({
+      tasks: [task, ...state.tasks.filter((t) => t.id !== task.id)],
+    })),
+  updateTaskInStore: (taskId, updates) =>
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t)),
+    })),
+  removeTaskFromStore: (taskId) =>
+    set((state) => ({
+      tasks: state.tasks.filter((t) => t.id !== taskId),
+    })),
+
   // Create Task
   isCreateTaskOpen: false,
   createTaskDefaultStatus: "TODO",
@@ -61,6 +96,18 @@ export const useUIStore = create<UIState>((set) => ({
   isAIAssistantOpen: false,
   toggleAIAssistant: () => set((state) => ({ isAIAssistantOpen: !state.isAIAssistantOpen })),
   setAIAssistantOpen: (open) => set({ isAIAssistantOpen: open }),
+
+  // Members Modal
+  isMembersModalOpen: false,
+  setMembersModalOpen: (open) => set({ isMembersModalOpen: open }),
+
+  // Create Project Modal
+  isCreateProjectOpen: false,
+  setCreateProjectOpen: (open) => set({ isCreateProjectOpen: open }),
+
+  // Activity Logs Panel
+  isActivityLogsOpen: false,
+  setActivityLogsOpen: (open) => set({ isActivityLogsOpen: open }),
 
   // View Mode
   viewMode: "kanban",

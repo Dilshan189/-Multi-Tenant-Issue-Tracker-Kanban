@@ -82,7 +82,10 @@ export async function createTaskAction(data: CreateTaskInput) {
       },
     });
 
-    revalidatePath(`/workspaces/${data.workspaceId}`);
+    revalidatePath("/");
+    if (data.workspaceId) {
+      revalidatePath(`/workspaces/${data.workspaceId}`);
+    }
     return { success: true, data: newTask };
   } catch (error) {
     console.error("Failed to create task:", error);
@@ -121,10 +124,9 @@ export async function updateTaskStatusAndOrderAction(
       },
     });
 
+    revalidatePath("/");
     if (workspaceSlug) {
       revalidatePath(`/${workspaceSlug}`);
-    } else {
-      revalidatePath("/");
     }
 
     return { success: true, data: updated };
@@ -139,26 +141,47 @@ export async function updateTaskDetailsAction(
   updates: {
     title?: string;
     description?: string;
+    status?: TaskStatus;
     priority?: TaskPriority;
     assigneeId?: string | null;
     dueDate?: Date | string | null;
   }
 ) {
   try {
+    const existing = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { workspaceId: true, title: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Task not found" };
+    }
+
     const updated = await prisma.task.update({
       where: { id: taskId },
       data: {
-        ...(updates.title !== undefined && { title: updates.title }),
+        ...(updates.title !== undefined && { title: updates.title.trim() }),
         ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.priority !== undefined && { priority: updates.priority }),
         ...(updates.assigneeId !== undefined && { assigneeId: updates.assigneeId }),
         ...(updates.dueDate !== undefined && {
           dueDate: updates.dueDate ? new Date(updates.dueDate) : null,
         }),
+        activityLogs: {
+          create: {
+            action: "TASK_UPDATED",
+            details: JSON.stringify({
+              fields: Object.keys(updates),
+            }),
+            workspaceId: existing.workspaceId,
+          },
+        },
       },
       include: {
         project: true,
         assignee: true,
+        creator: true,
       },
     });
 
