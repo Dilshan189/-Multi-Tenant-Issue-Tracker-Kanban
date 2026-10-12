@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+model User {
+  id            String            @id @default(cuid())
+  email         String            @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  memberships   WorkspaceMember[]
+  createdTasks  Task[]            @relation("TaskCreator")
+  assignedTasks Task[]            @relation("TaskAssignee")
+  activityLogs  ActivityLog[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  logoUrl     String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  members     WorkspaceMember[]
+  projects    Project[]
+  tasks       Task[]
+  activityLogs ActivityLog[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  role        Role      @default(MEMBER)
+  workspaceId String
+  userId      String
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  key         String    // e.g., "ENG", "PROD", "CORE"
+  description String?
+  color       String?   @default("#6366f1")
+  workspaceId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@unique([workspaceId, key])
+  @@map("projects")
+}
+
+model Task {
+  id          String        @id @default(cuid())
+  taskNumber  Int           // Serial number like 1, 2, 3 (Displayed as ENG-1, ENG-2)
+  title       String
+  description String?       // Markdown supported description
+  status      TaskStatus    @default(TODO)
+  priority    TaskPriority  @default(MEDIUM)
+  order       Float         @default(0) // Lexicographical or float ranking for Drag-and-Drop
+  dueDate     DateTime?
+  
+  workspaceId String
+  projectId   String
+  creatorId   String
+  assigneeId  String?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User          @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  activityLogs ActivityLog[]
+
+  @@index([workspaceId, projectId, status])
+  @@index([workspaceId, status, order])
+  @@map("tasks")
+}
+
+model ActivityLog {
+  id          String    @id @default(cuid())
+  action      String    // e.g. "TASK_CREATED", "STATUS_CHANGED", "ASSIGNED", "AI_AGENT_ACTION"
+  details     Json?     // Stores change metadata: { from: "TODO", to: "DONE", agent: true }
+  taskId      String?
+  userId      String?
+  workspaceId String
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, taskId])
+  @@map("activity_logs")
+}
